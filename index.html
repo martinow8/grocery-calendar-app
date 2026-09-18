@@ -1,17 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-<link rel="manifest" href="manifest.json">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LifeSync Hub</title>
-  <script
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-      .then(() => console.log("Service Worker Registered"));
-  }
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
 
- src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -161,13 +159,23 @@
 
   </main>
 
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('Service Worker Registered:', reg.scope))
+          .catch((err) => console.log('Service Worker Registration Failed:', err));
+      });
+    }
+  </script>
+
   <!-- Firebase Integration -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Your exact Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDTOMSxOalIm2T4osNh5qdBH9tNBYGZYzY",
       authDomain: "grocery-calendar-app.firebaseapp.com",
@@ -207,7 +215,6 @@
       }
     }
 
-    // Initialize saved theme
     const savedTheme = localStorage.getItem('lifesync_theme') || 'grey';
     setTheme(savedTheme);
 
@@ -272,7 +279,6 @@
 
     // Shared Collection Listeners
     function listenToCollections() {
-      // Groceries Realtime Sync
       onSnapshot(collection(db, "groceries"), (snapshot) => {
         const list = document.getElementById('groceryList');
         list.innerHTML = '';
@@ -289,7 +295,6 @@
         });
       });
 
-      // Tasks Realtime Sync
       onSnapshot(collection(db, "tasks"), (snapshot) => {
         const list = document.getElementById('taskList');
         list.innerHTML = '';
@@ -306,7 +311,6 @@
         });
       });
 
-      // Events Realtime Sync
       onSnapshot(collection(db, "events"), (snapshot) => {
         const list = document.getElementById('eventList');
         list.innerHTML = '';
