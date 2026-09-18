@@ -1,865 +1,357 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LifeSync Hub - Grocery, Tasks & Calendar</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LifeSync Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            theme: {
+              bg: 'var(--bg-main)',
+              card: 'var(--bg-card)',
+              border: 'var(--border-color)',
+              primary: 'var(--primary-color)',
+              primaryHover: 'var(--primary-hover)',
+              text: 'var(--text-color)',
+              muted: 'var(--text-muted)'
+            }
+          }
         }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.6);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(51, 65, 85, 0.8);
-            border-radius: 4px;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-    </style>
+      }
+    }
+  </script>
+  <style>
+    :root[data-theme="grey"] {
+      --bg-main: #0f172a;
+      --bg-card: #1e293b;
+      --border-color: #334155;
+      --primary-color: #6366f1;
+      --primary-hover: #4f46e5;
+      --text-color: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    :root[data-theme="pink"] {
+      --bg-main: #180811;
+      --bg-card: #2d0d22;
+      --border-color: #4a1538;
+      --primary-color: #ec4899;
+      --primary-hover: #db2777;
+      --text-color: #fdf2f8;
+      --text-muted: #f472b6;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-color);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .card-theme {
+      background-color: var(--bg-card);
+      border-color: var(--border-color);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: #ffffff;
+      transition: background-color 0.2s ease;
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .text-muted {
+      color: var(--text-muted);
+    }
+  </style>
 </head>
-<body class="h-full flex flex-col bg-slate-950 text-slate-100 max-w-md mx-auto relative shadow-2xl overflow-hidden border-x border-slate-800/50">
+<body class="min-h-screen flex flex-col font-sans">
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center transition-opacity duration-300">
-        <div class="relative w-16 h-16">
-            <div class="absolute inset-0 rounded-full border-4 border-emerald-500/20"></div>
-            <div class="absolute inset-0 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
+  <!-- Header -->
+  <header class="card-theme border-b p-4 flex justify-between items-center sticky top-0 z-50">
+    <h1 class="text-xl font-bold tracking-wide">LifeSync Hub</h1>
+    <div class="flex items-center gap-3">
+      <!-- Theme Switcher Button -->
+      <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2 rounded-lg card-theme border hover:opacity-80 flex items-center gap-2 text-xs font-semibold">
+        <span id="themeIcon">⚙️</span>
+        <span id="themeLabel">Grey Theme</span>
+      </button>
+      <button id="logoutBtn" onclick="handleLogout()" class="hidden text-xs bg-red-600/20 text-red-400 hover:bg-red-600/30 px-3 py-2 rounded-lg font-semibold border border-red-500/30">
+        Sign Out
+      </button>
+    </div>
+  </header>
+
+  <!-- Auth Screen -->
+  <main id="authScreen" class="flex-1 flex items-center justify-center p-4">
+    <div class="card-theme border rounded-2xl p-6 w-full max-w-sm shadow-xl">
+      <h2 id="authTitle" class="text-2xl font-bold mb-2 text-center">Welcome Back</h2>
+      <p class="text-xs text-muted mb-6 text-center">Sign in to access your synced grocery list, tasks, and calendar.</p>
+      
+      <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-muted">Email Address</label>
+          <input type="email" id="authEmail" required class="w-full p-3 rounded-lg card-theme border focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="user@example.com">
         </div>
-        <p class="mt-4 text-emerald-400 font-semibold text-sm tracking-wider uppercase animate-pulse">Connecting to Sync Hub...</p>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-muted">Password</label>
+          <input type="password" id="authPassword" required minlength="6" class="w-full p-3 rounded-lg card-theme border focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="••••••••">
+        </div>
+        <p id="authError" class="text-xs text-red-400 hidden"></p>
+        <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-lg btn-primary font-bold text-sm shadow-lg">Sign In</button>
+      </form>
+
+      <div class="mt-4 text-center">
+        <button onclick="toggleAuthMode()" id="authToggleModeBtn" class="text-xs text-muted hover:underline">Don't have an account? Sign Up</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Main App Screen -->
+  <main id="appScreen" class="flex-1 max-w-2xl w-full mx-auto p-4 space-y-6 hidden pb-24">
+    
+    <!-- Navigation Tabs -->
+    <div class="grid grid-cols-3 gap-2 card-theme p-1.5 rounded-xl border">
+      <button onclick="switchTab('groceries')" id="tab-groceries" class="py-2.5 text-xs font-bold rounded-lg transition-all btn-primary">🛒 Groceries</button>
+      <button onclick="switchTab('tasks')" id="tab-tasks" class="py-2.5 text-xs font-bold rounded-lg transition-all text-muted hover:bg-white/5">📋 Tasks</button>
+      <button onclick="switchTab('events')" id="tab-events" class="py-2.5 text-xs font-bold rounded-lg transition-all text-muted hover:bg-white/5">📅 Calendar</button>
     </div>
 
-    <!-- Auth View Container -->
-    <div id="authView" class="hidden absolute inset-0 bg-slate-950 z-40 p-6 flex flex-col justify-between overflow-y-auto">
-        <div class="pt-8 text-center">
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-tr from-emerald-600 to-teal-400 rounded-2xl shadow-lg shadow-emerald-500/30 mb-4">
-                <i class="fa-solid fa-arrows-rotate text-3xl text-white"></i>
-            </div>
-            <h1 class="text-3xl font-extrabold text-white tracking-tight">LifeSync Hub</h1>
-            <p class="text-slate-400 text-sm mt-2">Sync Groceries, Tasks & Calendar across all your devices in real-time.</p>
-        </div>
+    <!-- Groceries Section -->
+    <section id="section-groceries" class="space-y-4">
+      <form onsubmit="addGroceryItem(event)" class="flex gap-2">
+        <input type="text" id="groceryInput" placeholder="Add grocery item..." required class="flex-1 p-3 rounded-xl card-theme border focus:outline-none focus:ring-2 text-sm">
+        <button type="submit" class="px-5 rounded-xl btn-primary font-bold text-sm">Add</button>
+      </form>
+      <div id="groceryList" class="space-y-2"></div>
+    </section>
 
-        <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 shadow-xl my-auto">
-            <div id="authAlert" class="hidden mb-4 p-3 rounded-lg text-xs font-medium border bg-rose-500/10 border-rose-500/30 text-rose-400"></div>
+    <!-- Tasks Section -->
+    <section id="section-tasks" class="space-y-4 hidden">
+      <form onsubmit="addTaskItem(event)" class="flex gap-2">
+        <input type="text" id="taskInput" placeholder="Add new task..." required class="flex-1 p-3 rounded-xl card-theme border focus:outline-none focus:ring-2 text-sm">
+        <button type="submit" class="px-5 rounded-xl btn-primary font-bold text-sm">Add</button>
+      </form>
+      <div id="taskList" class="space-y-2"></div>
+    </section>
 
-            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Email Address</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-envelope absolute left-3 top-3 text-slate-500 text-sm"></i>
-                        <input type="email" id="authEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors" placeholder="you@example.com">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Password</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-lock absolute left-3 top-3 text-slate-500 text-sm"></i>
-                        <input type="password" id="authPassword" required minlength="6" class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors" placeholder="••••••••">
-                    </div>
-                </div>
+    <!-- Calendar Section -->
+    <section id="section-events" class="space-y-4 hidden">
+      <form onsubmit="addEventItem(event)" class="space-y-2 card-theme p-4 rounded-xl border">
+        <input type="text" id="eventTitle" placeholder="Event Title" required class="w-full p-2.5 rounded-lg card-theme border text-sm">
+        <input type="datetime-local" id="eventDate" required class="w-full p-2.5 rounded-lg card-theme border text-sm">
+        <button type="submit" class="w-full py-2.5 rounded-lg btn-primary font-bold text-sm">Add Event</button>
+      </form>
+      <div id="eventList" class="space-y-2"></div>
+    </section>
 
-                <button type="submit" id="authSubmitBtn" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all duration-150">
-                    Sign In
-                </button>
-            </form>
+  </main>
 
-            <div class="relative my-6">
-                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-800"></div></div>
-                <div class="relative flex justify-center text-xs uppercase"><span class="bg-slate-900 px-3 text-slate-500">Or Continue As</span></div>
-            </div>
+  <!-- Firebase Integration -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-            <button type="button" onclick="handleGuestAuth()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-200 font-medium text-sm rounded-xl border border-slate-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                <i class="fa-solid fa-user-secret text-slate-400"></i> Guest / Quick Demo Mode
-            </button>
-            <p class="text-[11px] text-slate-500 text-center mt-2">Guest mode uses a device-shared temp token.</p>
-        </div>
+    // Your exact Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTOMSxOalIm2T4osNh5qdBH9tNBYGZYzY",
+      authDomain: "grocery-calendar-app.firebaseapp.com",
+      projectId: "grocery-calendar-app",
+      storageBucket: "grocery-calendar-app.firebasestorage.app",
+      messagingSenderId: "878403563311",
+      appId: "1:878403563311:web:7f11d993506c81cb7b7bda"
+    };
 
-        <div class="text-center text-xs text-slate-500 pb-4">
-            <p>Ready to sync with multiple phones?</p>
-            <p class="text-slate-400 mt-1">Use the same Email/Password on all devices!</p>
-        </div>
-    </div>
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    <!-- App Header -->
-    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 flex items-center justify-between z-20 sticky top-0">
-        <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-xl flex items-center justify-center shadow-md shadow-emerald-500/20">
-                <i class="fa-solid fa-arrows-rotate text-slate-950 font-bold text-lg"></i>
-            </div>
-            <div>
-                <h1 class="text-base font-bold text-white tracking-wide leading-none" id="appHeaderTitle">Grocery List</h1>
-                <span class="text-[10px] font-medium text-emerald-400 flex items-center gap-1 mt-0.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Cloud Synced
-                </span>
-            </div>
-        </div>
-        <div class="flex items-center gap-2">
-            <button onclick="switchTab('profile')" class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
-                <i class="fa-solid fa-user text-xs"></i>
-            </button>
-        </div>
-    </header>
+    setPersistence(auth, browserLocalPersistence);
 
-    <!-- Main Content Area -->
-    <main class="flex-1 overflow-y-auto relative p-4 space-y-4 pb-20">
+    let isSignUp = false;
 
-        <!-- ==================== GROCERY TAB ==================== -->
-        <section id="tab-grocery" class="space-y-4">
-            <!-- Add Item Input -->
-            <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-md">
-                <form id="groceryForm" onsubmit="addGroceryItem(event)" class="space-y-2">
-                    <div class="flex gap-2">
-                        <input type="text" id="groceryName" required placeholder="Add item (e.g., Organic Milk)..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
-                        <input type="text" id="groceryQty" placeholder="Qty" value="1" class="w-16 bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-sm text-center text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
-                    </div>
-                    <div class="flex items-center justify-between gap-2 pt-1">
-                        <select id="groceryCategory" class="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500">
-                            <option value="Produce">🥬 Produce</option>
-                            <option value="Dairy">🥛 Dairy & Eggs</option>
-                            <option value="Bakery">🍞 Bakery</option>
-                            <option value="Meat">🥩 Meat & Seafood</option>
-                            <option value="Pantry">🥫 Pantry & Snacks</option>
-                            <option value="Beverages">🧃 Beverages</option>
-                            <option value="Other">📦 Other</option>
-                        </select>
-                        <button type="submit" class="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition flex items-center gap-1">
-                            <i class="fa-solid fa-plus text-xs"></i> Add Item
-                        </button>
-                    </div>
-                </form>
-            </div>
+    // Theme Switcher Logic
+    window.toggleTheme = function() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'grey';
+      const newTheme = currentTheme === 'grey' ? 'pink' : 'grey';
+      setTheme(newTheme);
+    };
 
-            <!-- Category Filters -->
-            <div class="flex gap-1.5 overflow-x-auto hide-scrollbar py-1">
-                <button onclick="filterGroceryCategory('All')" class="g-cat-btn px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-full text-xs font-semibold whitespace-nowrap active">All</button>
-                <button onclick="filterGroceryCategory('Produce')" class="g-cat-btn px-3 py-1 bg-slate-900 text-slate-400 border border-slate-800 rounded-full text-xs font-medium whitespace-nowrap">🥬 Produce</button>
-                <button onclick="filterGroceryCategory('Dairy')" class="g-cat-btn px-3 py-1 bg-slate-900 text-slate-400 border border-slate-800 rounded-full text-xs font-medium whitespace-nowrap">🥛 Dairy</button>
-                <button onclick="filterGroceryCategory('Bakery')" class="g-cat-btn px-3 py-1 bg-slate-900 text-slate-400 border border-slate-800 rounded-full text-xs font-medium whitespace-nowrap">🍞 Bakery</button>
-                <button onclick="filterGroceryCategory('Meat')" class="g-cat-btn px-3 py-1 bg-slate-900 text-slate-400 border border-slate-800 rounded-full text-xs font-medium whitespace-nowrap">🥩 Meat</button>
-                <button onclick="filterGroceryCategory('Pantry')" class="g-cat-btn px-3 py-1 bg-slate-900 text-slate-400 border border-slate-800 rounded-full text-xs font-medium whitespace-nowrap">🥫 Pantry</button>
-            </div>
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('lifesync_theme', theme);
+      
+      const label = document.getElementById('themeLabel');
+      const icon = document.getElementById('themeIcon');
+      if (theme === 'pink') {
+        label.innerText = 'Pink Theme';
+        icon.innerText = '🌸';
+      } else {
+        label.innerText = 'Grey Theme';
+        icon.innerText = '⚙️';
+      }
+    }
 
-            <!-- Grocery List Content -->
-            <div id="groceryList" class="space-y-2">
-                <!-- Items populated dynamically -->
-            </div>
-        </section>
+    // Initialize saved theme
+    const savedTheme = localStorage.getItem('lifesync_theme') || 'grey';
+    setTheme(savedTheme);
 
-        <!-- ==================== TASKS TAB ==================== -->
-        <section id="tab-tasks" class="hidden space-y-4">
-            <!-- Add Task Input -->
-            <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-md">
-                <form id="taskForm" onsubmit="addTodoListTask(event)" class="space-y-2">
-                    <input type="text" id="taskTitle" required placeholder="What needs to be done?..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
-                    
-                    <div class="flex items-center justify-between gap-2 pt-1">
-                        <div class="flex items-center gap-2">
-                            <select id="taskPriority" class="bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
-                                <option value="Low">🔵 Low</option>
-                                <option value="Medium" selected>🟡 Medium</option>
-                                <option value="High">🔴 High</option>
-                            </select>
-                            <input type="date" id="taskDueDate" class="bg-slate-950 border border-slate-800 rounded-xl px-2 py-1 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
-                        </div>
-                        <button type="submit" class="px-4 py-1.5 bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-1">
-                            <i class="fa-solid fa-plus text-xs"></i> Add Task
-                        </button>
-                    </div>
-                </form>
-            </div>
+    // Auth Switcher
+    window.toggleAuthMode = function() {
+      isSignUp = !isSignUp;
+      document.getElementById('authTitle').innerText = isSignUp ? "Create Account" : "Welcome Back";
+      document.getElementById('authSubmitBtn').innerText = isSignUp ? "Sign Up" : "Sign In";
+      document.getElementById('authToggleModeBtn').innerText = isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up";
+    };
 
-            <!-- Task Filter Tabs -->
-            <div class="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
-                <button onclick="setTaskFilter('all')" id="taskFilterAll" class="py-1.5 text-center font-medium rounded-lg bg-indigo-600 text-white">All Tasks</button>
-                <button onclick="setTaskFilter('pending')" id="taskFilterPending" class="py-1.5 text-center font-medium text-slate-400 hover:text-slate-200">Pending</button>
-                <button onclick="setTaskFilter('completed')" id="taskFilterCompleted" class="py-1.5 text-center font-medium text-slate-400 hover:text-slate-200">Done</button>
-            </div>
+    window.handleAuth = async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      const errorEl = document.getElementById('authError');
+      errorEl.classList.add('hidden');
 
-            <!-- Task Items -->
-            <div id="taskList" class="space-y-2">
-                <!-- Dynamic tasks list -->
-            </div>
-        </section>
+      try {
+        if (isSignUp) {
+          await createUserWithEmailAndPassword(auth, email, password);
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+        }
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.classList.remove('hidden');
+      }
+    };
 
-        <!-- ==================== CALENDAR TAB ==================== -->
-        <section id="tab-calendar" class="hidden space-y-4">
-            <!-- Calendar Navigation Header -->
-            <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-md">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 id="calendarMonthYear" class="text-base font-bold text-white">Month Year</h2>
-                    <div class="flex items-center gap-1">
-                        <button onclick="changeMonth(-1)" class="w-8 h-8 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-300 hover:text-white"><i class="fa-solid fa-chevron-left text-xs"></i></button>
-                        <button onclick="resetMonth()" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300 hover:text-white">Today</button>
-                        <button onclick="changeMonth(1)" class="w-8 h-8 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-300 hover:text-white"><i class="fa-solid fa-chevron-right text-xs"></i></button>
-                    </div>
-                </div>
+    window.handleLogout = function() {
+      signOut(auth);
+    };
 
-                <!-- Days of Week Header -->
-                <div class="grid grid-cols-7 text-center text-[11px] font-semibold text-slate-500 mb-2">
-                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                </div>
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById('authScreen').classList.add('hidden');
+        document.getElementById('appScreen').classList.remove('hidden');
+        document.getElementById('logoutBtn').classList.remove('hidden');
+        listenToCollections();
+      } else {
+        document.getElementById('authScreen').classList.remove('hidden');
+        document.getElementById('appScreen').classList.add('hidden');
+        document.getElementById('logoutBtn').classList.add('hidden');
+      }
+    });
 
-                <!-- Days Grid -->
-                <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center">
-                    <!-- Dates rendered dynamically -->
-                </div>
-            </div>
+    // Navigation Tabs
+    window.switchTab = function(tab) {
+      ['groceries', 'tasks', 'events'].forEach(t => {
+        const sec = document.getElementById(`section-${t}`);
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          sec.classList.remove('hidden');
+          btn.className = "py-2.5 text-xs font-bold rounded-lg transition-all btn-primary";
+        } else {
+          sec.classList.add('hidden');
+          btn.className = "py-2.5 text-xs font-bold rounded-lg transition-all text-muted hover:bg-white/5";
+        }
+      });
+    };
 
-            <!-- Selected Date Events Panel -->
-            <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-md space-y-3">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <h3 id="selectedDateText" class="text-sm font-semibold text-amber-400">Events for Selected Date</h3>
-                    <button onclick="openAddEventModal()" class="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow transition flex items-center gap-1">
-                        <i class="fa-solid fa-plus"></i> New Event
-                    </button>
-                </div>
-
-                <div id="selectedDateEventsList" class="space-y-2">
-                    <!-- Events rendered dynamically -->
-                </div>
-            </div>
-        </section>
-
-        <!-- ==================== PROFILE / SETTINGS TAB ==================== -->
-        <section id="tab-profile" class="hidden space-y-4">
-            <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 text-center space-y-3">
-                <div class="w-16 h-16 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-full mx-auto flex items-center justify-center text-slate-950 text-2xl font-bold">
-                    <i class="fa-solid fa-user-gear"></i>
-                </div>
-                <div>
-                    <h2 class="text-lg font-bold text-white" id="userEmailDisplay">User</h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Device Sync Account</p>
-                </div>
-                <div class="pt-2 border-t border-slate-800">
-                    <button onclick="handleSignOut()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-semibold rounded-xl text-xs transition">
-                        <i class="fa-solid fa-right-from-bracket mr-1"></i> Sign Out
-                    </button>
-                </div>
-            </div>
-
-            <!-- Account Details Card -->
-            <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3 text-xs">
-                <h3 class="font-bold text-slate-200 uppercase tracking-wider text-[10px]">Multi-Device Setup Guide</h3>
-                <p class="text-slate-400">To view and manage your Grocery, Task, and Calendar list on another phone, tablet, or PC:</p>
-                <ol class="list-decimal list-inside space-y-1.5 text-slate-300">
-                    <li>Open this web application URL on the second device.</li>
-                    <li>Sign in using the <strong>exact same Email & Password</strong>.</li><li>Changes will update in real-time across all connected screens!</li>
-                </ol>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Event Creation Modal -->
-    <div id="eventModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                <h3 class="font-bold text-slate-100 text-base">Add Event</h3>
-                <button onclick="closeAddEventModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form id="eventForm" onsubmit="addCalendarEvent(event)" class="space-y-3 text-xs">
-                <div>
-                    <label class="block font-medium text-slate-400 mb-1">Event Title</label>
-                    <input type="text" id="eventTitle" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500" placeholder="e.g. Doctor Appointment">
-                </div>
-                <div>
-                    <label class="block font-medium text-slate-400 mb-1">Date</label>
-                    <input type="date" id="eventDate" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
-                </div>
-                <div>
-                    <label class="block font-medium text-slate-400 mb-1">Time (Optional)</label>
-                    <input type="time" id="eventTime" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
-                </div>
-                <div>
-                    <label class="block font-medium text-slate-400 mb-1">Category / Tag</label>
-                    <select id="eventCategory" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
-                        <option value="Personal">🔵 Personal</option>
-                        <option value="Work">🟣 Work</option>
-                        <option value="Family">🟢 Family</option>
-                        <option value="Important">🔴 Important</option>
-                    </select>
-                </div>
-                <div class="flex gap-2 pt-2">
-                    <button type="button" onclick="closeAddEventModal()" class="flex-1 py-2.5 bg-slate-800 text-slate-300 font-semibold rounded-xl">Cancel</button>
-                    <button type="submit" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl shadow-md">Save Event</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Bottom Mobile Navigation Bar -->
-    <nav class="bg-slate-900/90 backdrop-blur-md border-t border-slate-800/80 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-30 flex justify-around items-center py-2 px-3">
-        <button onclick="switchTab('grocery')" id="nav-grocery" class="nav-btn flex flex-col items-center gap-1 text-emerald-400">
-            <i class="fa-solid fa-cart-shopping text-lg"></i>
-            <span class="text-[10px] font-semibold">Grocery</span>
-        </button>
-        <button onclick="switchTab('tasks')" id="nav-tasks" class="nav-btn flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300">
-            <i class="fa-solid fa-list-check text-lg"></i>
-            <span class="text-[10px] font-semibold">Tasks</span>
-        </button>
-        <button onclick="switchTab('calendar')" id="nav-calendar" class="nav-btn flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300">
-            <i class="fa-solid fa-calendar-days text-lg"></i>
-            <span class="text-[10px] font-semibold">Calendar</span>
-        </button>
-        <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300">
-            <i class="fa-solid fa-gear text-lg"></i>
-            <span class="text-[10px] font-semibold">Settings</span>
-        </button>
-    </nav>
-
-    <!-- Firebase Module Scripts -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            signInWithCustomToken, 
-            signInAnonymously, 
-            signInWithEmailAndPassword,
-            createUserWithEmailAndPassword,
-            onAuthStateChanged,
-            signOut 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            doc, 
-            addDoc, 
-            updateDoc, 
-            deleteDoc, 
-            onSnapshot 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Global Firebase state & variables
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lifesync-app-default';
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyDTOMSxOalIm2T4osNh5qdBH9tNBYGZYzY",
-  authDomain: "grocery-calendar-app.firebaseapp.com",
-  projectId: "grocery-calendar-app",
-  storageBucket: "grocery-calendar-app.firebasestorage.app",
-  messagingSenderId: "878403563311",
-  appId: "1:878403563311:web:7f11d993506c81cb7b7bda"
-};
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        let currentUser = null;
-        let activeTab = 'grocery';
-        let groceryFilterCategory = 'All';
-        let taskFilterState = 'all';
-
-        // Local state copies for live view rendering
-        let groceryItems = [];
-        let taskItems = [];
-        let calendarEvents = [];
-
-        // Calendar Date Logic state
-        let currentDate = new Date();
-        let selectedCalendarDate = formatDateISO(new Date());
-
-        window.addEventListener('load', async () => {
-            // Attempt persistent token login first if provided
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                }
-            } catch (err) {
-                console.warn("Custom token login failed, waiting for user/anonymous auth", err);
-            }
-
-            onAuthStateChanged(auth, (user) => {
-                document.getElementById('loadingOverlay').classList.add('opacity-0');
-                setTimeout(() => document.getElementById('loadingOverlay').classList.add('hidden'), 300);
-
-                if (user) {
-                    currentUser = user;
-                    document.getElementById('authView').classList.add('hidden');
-                    document.getElementById('userEmailDisplay').textContent = user.email || `Guest (${user.uid.substring(0,6)}...)`;
-                    setupRealtimeListeners();
-                } else {
-                    currentUser = null;
-                    document.getElementById('authView').classList.remove('hidden');
-                }
-            });
-
-            renderCalendar();
+    // Shared Collection Listeners
+    function listenToCollections() {
+      // Groceries Realtime Sync
+      onSnapshot(collection(db, "groceries"), (snapshot) => {
+        const list = document.getElementById('groceryList');
+        list.innerHTML = '';
+        snapshot.forEach((docSnap) => {
+          const item = docSnap.data();
+          list.innerHTML += `
+            <div class="flex items-center justify-between p-3 rounded-xl card-theme border">
+              <span class="text-sm ${item.completed ? 'line-through opacity-50' : ''}">${item.name}</span>
+              <div class="flex gap-2">
+                <button onclick="toggleGrocery('${docSnap.id}', ${!item.completed})" class="text-xs px-2 py-1 rounded card-theme border">${item.completed ? 'Undo' : 'Done'}</button>
+                <button onclick="deleteDocItem('groceries', '${docSnap.id}')" class="text-xs text-red-400 px-2 py-1">✕</button>
+              </div>
+            </div>`;
         });
-
-        // Authentication Handlers
-        window.handleAuthSubmit = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
-            const alertEl = document.getElementById('authAlert');
-            alertEl.classList.add('hidden');
-
-            try {
-                // Try logging in, if fails create account automatically for smooth user UX
-                try {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } catch (err) {
-                    if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-                        await createUserWithEmailAndPassword(auth, email, password);
-                    } else {
-                        throw err;
-                    }
-                }
-            } catch (err) {
-                alertEl.textContent = err.message.replace('Firebase:', '');
-                alertEl.classList.remove('hidden');
-            }
-        };
-
-        window.handleGuestAuth = async () => {
-            try {
-                await signInAnonymously(auth);
-            } catch (err) {
-                alert("Guest Login Error: " + err.message);
-            }
-        };
-
-        window.handleSignOut = () => {
-            signOut(auth);
-        };
-
-        function setupRealtimeListeners() {
-            if (!currentUser) return;
-
-            // Firestore Paths following RULE 1
-            const publicPath = (col) => collection(db, 'artifacts', appId, 'public', 'data', col);
-
-            // 1. Grocery Realtime Subscription
-            onSnapshot(publicPath('groceries'), (snapshot) => {
-                groceryItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderGroceries();
-            }, (err) => console.error("Grocery sync error", err));
-
-            // 2. Tasks Realtime Subscription
-            onSnapshot(publicPath('tasks'), (snapshot) => {
-                taskItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderTasks();
-            }, (err) => console.error("Tasks sync error", err));
-
-            // 3. Calendar Events Realtime Subscription
-            onSnapshot(publicPath('events'), (snapshot) => {
-                calendarEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderCalendar();
-                renderSelectedDateEvents();
-            }, (err) => console.error("Events sync error", err));
-        }
-
-        window.addGroceryItem = async (e) => {
-            e.preventDefault();
-            if (!currentUser) return;
-
-            const name = document.getElementById('groceryName').value.trim();
-            const qty = document.getElementById('groceryQty').value.trim();
-            const category = document.getElementById('groceryCategory').value;
-
-            if (!name) return;
-
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'groceries'), {
-                    name,
-                    qty: qty || '1',
-                    category,
-                    checked: false,
-                    createdAt: Date.now(),
-                    createdBy: currentUser.uid
-                });
-                document.getElementById('groceryName').value = '';
-                document.getElementById('groceryQty').value = '1';
-            } catch (err) {
-                console.error("Error adding grocery item:", err);
-            }
-        };
-
-        window.toggleGroceryCheck = async (id, currentStatus) => {
-            if (!currentUser) return;
-            try {
-                const itemRef = doc(db, 'artifacts', appId, 'public', 'data', 'groceries', id);
-                await updateDoc(itemRef, { checked: !currentStatus });
-            } catch (err) {
-                console.error("Error toggling grocery item:", err);
-            }
-        };
-
-        window.deleteGroceryItem = async (id) => {
-            if (!currentUser) return;
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'groceries', id));
-            } catch (err) {
-                console.error("Error deleting item:", err);
-            }
-        };
-
-        window.filterGroceryCategory = (cat) => {
-            groceryFilterCategory = cat;
-            document.querySelectorAll('.g-cat-btn').forEach(btn => {
-                if (btn.textContent.includes(cat)) {
-                    btn.className = "g-cat-btn px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-full text-xs font-semibold whitespace-nowrap active";
-                } else {
-                    btn.className = "g-cat-btn px-3 py-1 bg-slate-900 text-slate-400 border border-slate-800 rounded-full text-xs font-medium whitespace-nowrap";
-                }
-            });
-            renderGroceries();
-        };
-
-        function renderGroceries() {
-            const listEl = document.getElementById('groceryList');
-            let filtered = groceryItems;
-
-            if (groceryFilterCategory !== 'All') {
-                filtered = filtered.filter(i => i.category === groceryFilterCategory);
-            }
-
-            if (filtered.length === 0) {
-                listEl.innerHTML = `
-                    <div class="text-center py-8 text-slate-500 text-xs">
-                        <i class="fa-solid fa-basket-shopping text-3xl mb-2 text-slate-700"></i>
-                        <p>No grocery items found.</p>
-                    </div>`;
-                return;
-            }
-
-            listEl.innerHTML = filtered.map(item => `
-                <div class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-800/80 hover:border-slate-700 transition ${item.checked ? 'opacity-50' : ''}">
-                    <div class="flex items-center gap-3 cursor-pointer flex-1" onclick="toggleGroceryCheck('${item.id}', ${item.checked})">
-                        <div class="w-5 h-5 rounded-md border flex items-center justify-center ${item.checked ? 'bg-emerald-500 border-emerald-500 text-slate-950' : 'border-slate-700 bg-slate-950'}">
-                            ${item.checked ? '<i class="fa-solid fa-check text-xs font-bold"></i>' : ''}
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium ${item.checked ? 'line-through text-slate-400' : 'text-slate-100'}">${escapeHtml(item.name)}</p>
-                            <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">${escapeHtml(item.category)}</span>
-                                <span class="text-[10px] text-emerald-400 font-semibold">x${escapeHtml(item.qty)}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="deleteGroceryItem('${item.id}')" class="text-slate-600 hover:text-rose-400 p-2 transition">
-                        <i class="fa-solid fa-trash-can text-sm"></i>
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        window.addTodoListTask = async (e) => {
-            e.preventDefault();
-            if (!currentUser) return;
-
-            const title = document.getElementById('taskTitle').value.trim();
-            const priority = document.getElementById('taskPriority').value;
-            const dueDate = document.getElementById('taskDueDate').value;
-
-            if (!title) return;
-
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), {
-                    title,
-                    priority,
-                    dueDate: dueDate || '',
-                    completed: false,
-                    createdAt: Date.now(),
-                    createdBy: currentUser.uid
-                });
-                document.getElementById('taskTitle').value = '';
-                document.getElementById('taskDueDate').value = '';
-            } catch (err) {
-                console.error("Error adding task:", err);
-            }
-        };
-
-        window.toggleTaskComplete = async (id, currentStatus) => {
-            if (!currentUser) return;
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', id), {
-                    completed: !currentStatus
-                });
-            } catch (err) {
-                console.error("Error updating task:", err);
-            }
-        };
-
-        window.deleteTaskItem = async (id) => {
-            if (!currentUser) return;
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', id));
-            } catch (err) {
-                console.error("Error deleting task:", err);
-            }
-        };
-
-        window.setTaskFilter = (filter) => {
-            taskFilterState = filter;
-            document.getElementById('taskFilterAll').className = filter === 'all' ? 'py-1.5 text-center font-medium rounded-lg bg-indigo-600 text-white' : 'py-1.5 text-center font-medium text-slate-400 hover:text-slate-200';
-            document.getElementById('taskFilterPending').className = filter === 'pending' ? 'py-1.5 text-center font-medium rounded-lg bg-indigo-600 text-white' : 'py-1.5 text-center font-medium text-slate-400 hover:text-slate-200';
-            document.getElementById('taskFilterCompleted').className = filter === 'completed' ? 'py-1.5 text-center font-medium rounded-lg bg-indigo-600 text-white' : 'py-1.5 text-center font-medium text-slate-400 hover:text-slate-200';
-            renderTasks();
-        };
-
-        function renderTasks() {
-            const listEl = document.getElementById('taskList');
-            let filtered = taskItems;
-
-            if (taskFilterState === 'pending') filtered = filtered.filter(t => !t.completed);
-            if (taskFilterState === 'completed') filtered = filtered.filter(t => t.completed);
-
-            if (filtered.length === 0) {
-                listEl.innerHTML = `
-                    <div class="text-center py-8 text-slate-500 text-xs">
-                        <i class="fa-solid fa-clipboard-check text-3xl mb-2 text-slate-700"></i>
-                        <p>No tasks found in this section.</p>
-                    </div>`;
-                return;
-            }
-
-            const priorityColors = {
-                'High': 'text-rose-400 border-rose-500/30 bg-rose-500/10',
-                'Medium': 'text-amber-400 border-amber-500/30 bg-amber-500/10',
-                'Low': 'text-indigo-400 border-indigo-500/30 bg-indigo-500/10'
-            };
-
-            listEl.innerHTML = filtered.map(task => `
-                <div class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-800 hover:border-slate-700 transition ${task.completed ? 'opacity-50' : ''}">
-                    <div class="flex items-center gap-3 cursor-pointer flex-1" onclick="toggleTaskComplete('${task.id}', ${task.completed})">
-                        <div class="w-5 h-5 rounded-full border flex items-center justify-center ${task.completed ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-700 bg-slate-950'}">
-                            ${task.completed ? '<i class="fa-solid fa-check text-xs"></i>' : ''}
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium ${task.completed ? 'line-through text-slate-400' : 'text-slate-100'}">${escapeHtml(task.title)}</p>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-[10px] px-2 py-0.5 rounded-full border ${priorityColors[task.priority] || ''}">${task.priority} Priority</span>
-                                ${task.dueDate ? `<span class="text-[10px] text-slate-400"><i class="fa-regular fa-calendar mr-1"></i>${task.dueDate}</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="deleteTaskItem('${task.id}')" class="text-slate-600 hover:text-rose-400 p-2 transition">
-                        <i class="fa-solid fa-trash-can text-sm"></i>
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        window.changeMonth = (delta) => {
-            currentDate.setMonth(currentDate.getMonth() + delta);
-            renderCalendar();
-        };
-
-        window.resetMonth = () => {
-            currentDate = new Date();
-            selectedCalendarDate = formatDateISO(new Date());
-            renderCalendar();
-            renderSelectedDateEvents();
-        };
-
-        function renderCalendar() {
-            const monthYearEl = document.getElementById('calendarMonthYear');
-            const gridEl = document.getElementById('calendarGrid');
-
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            monthYearEl.textContent = `${monthNames[month]} ${year}`;
-
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const totalDays = new Date(year, month + 1, 0).getDate();
-
-            let gridHTML = '';
-
-            // Previous month padding days
-            for (let i = 0; i < firstDayIndex; i++) {
-                gridHTML += `<div class="h-10 rounded-xl bg-slate-950/40 opacity-20"></div>`;
-            }
-
-            const todayISO = formatDateISO(new Date());
-
-            // Current month days
-            for (let day = 1; day <= totalDays; day++) {
-                const dateISO = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const isSelected = dateISO === selectedCalendarDate;
-                const isToday = dateISO === todayISO;
-
-                // Check if date has events
-                const hasEvent = calendarEvents.some(e => e.date === dateISO);
-
-                let bgClass = 'bg-slate-950/80 text-slate-300 hover:bg-slate-800';
-                if (isSelected) bgClass = 'bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20';
-                else if (isToday) bgClass = 'bg-slate-800 text-amber-400 border border-amber-500/50 font-bold';
-
-                gridHTML += `
-                    <button onclick="selectCalendarDate('${dateISO}')" class="h-10 rounded-xl ${bgClass} flex flex-col items-center justify-center relative transition">
-                        <span class="text-xs">${day}</span>
-                        ${hasEvent ? `<span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-slate-950' : 'bg-amber-400'} absolute bottom-1"></span>` : ''}
-                    </button>
-                `;
-            }
-
-            gridEl.innerHTML = gridHTML;
-        }
-
-        window.selectCalendarDate = (dateISO) => {
-            selectedCalendarDate = dateISO;
-            renderCalendar();
-            renderSelectedDateEvents();
-        };
-
-        function renderSelectedDateEvents() {
-            const container = document.getElementById('selectedDateEventsList');
-            const titleEl = document.getElementById('selectedDateText');
-            
-            titleEl.textContent = `Events on ${selectedCalendarDate}`;
-
-            const dayEvents = calendarEvents.filter(e => e.date === selectedCalendarDate);
-
-            if (dayEvents.length === 0) {
-                container.innerHTML = `
-                    <p class="text-center text-xs text-slate-500 py-4">No events scheduled for this day.</p>
-                `;
-                return;
-            }
-
-            const catColors = {
-                'Personal': 'border-blue-500/40 bg-blue-500/10 text-blue-400',
-                'Work': 'border-purple-500/40 bg-purple-500/10 text-purple-400',
-                'Family': 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400',
-                'Important': 'border-rose-500/40 bg-rose-500/10 text-rose-400'
-            };
-
-            container.innerHTML = dayEvents.map(evt => `
-                <div class="flex items-center justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
-                    <div>
-                        <p class="text-xs font-semibold text-slate-100">${escapeHtml(evt.title)}</p>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[9px] px-2 py-0.5 rounded-full border ${catColors[evt.category] || ''}">${evt.category}</span>
-                            ${evt.time ? `<span class="text-[10px] text-slate-400"><i class="fa-regular fa-clock mr-1"></i>${evt.time}</span>` : ''}
-                        </div>
-                    </div>
-                    <button onclick="deleteCalendarEvent('${evt.id}')" class="text-slate-600 hover:text-rose-400 p-1.5">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        window.openAddEventModal = () => {
-            document.getElementById('eventDate').value = selectedCalendarDate;
-            document.getElementById('eventModal').classList.remove('hidden');
-        };
-
-        window.closeAddEventModal = () => {
-            document.getElementById('eventModal').classList.add('hidden');
-        };
-
-        window.addCalendarEvent = async (e) => {
-            e.preventDefault();
-            if (!currentUser) return;
-
-            const title = document.getElementById('eventTitle').value.trim();
-            const date = document.getElementById('eventDate').value;
-            const time = document.getElementById('eventTime').value;
-            const category = document.getElementById('eventCategory').value;
-
-            if (!title || !date) return;
-
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'events'), {
-                    title,
-                    date,
-                    time: time || '',
-                    category,
-                    createdAt: Date.now(),
-                    createdBy: currentUser.uid
-                });
-                closeAddEventModal();
-                document.getElementById('eventTitle').value = '';
-            } catch (err) {
-                console.error("Error adding event:", err);
-            }
-        };
-
-        window.deleteCalendarEvent = async (id) => {
-            if (!currentUser) return;
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
-            } catch (err) {
-                console.error("Error deleting event:", err);
-            }
-        };
-
-        window.switchTab = (tabName) => {
-            activeTab = tabName;
-            
-            // Hide all tab sections
-            document.getElementById('tab-grocery').classList.add('hidden');
-            document.getElementById('tab-tasks').classList.add('hidden');
-            document.getElementById('tab-calendar').classList.add('hidden');
-            document.getElementById('tab-profile').classList.add('hidden');
-
-            // Show current tab section
-            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-
-            // Update Header Title
-            const titles = {
-                grocery: 'Grocery List',
-                tasks: 'Task Manager',
-                calendar: 'Event Calendar',
-                profile: 'Sync Settings'
-            };
-            document.getElementById('appHeaderTitle').textContent = titles[tabName];
-
-            // Update Bottom Nav Styling
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.className = "nav-btn flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300";
-            });
-
-            const activeColorClasses = {
-                grocery: 'text-emerald-400',
-                tasks: 'text-indigo-400',
-                calendar: 'text-amber-400',
-                profile: 'text-teal-400'
-            };
-
-            const activeBtn = document.getElementById(`nav-${tabName}`);
-            if (activeBtn) {
-                activeBtn.className = `nav-btn flex flex-col items-center gap-1 ${activeColorClasses[tabName]}`;
-            }
-        };
-
-        // Utility functions
-        function formatDateISO(d) {
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        function escapeHtml(str) {
-            return String(str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-        }
-    </script>
+      });
+
+      // Tasks Realtime Sync
+      onSnapshot(collection(db, "tasks"), (snapshot) => {
+        const list = document.getElementById('taskList');
+        list.innerHTML = '';
+        snapshot.forEach((docSnap) => {
+          const item = docSnap.data();
+          list.innerHTML += `
+            <div class="flex items-center justify-between p-3 rounded-xl card-theme border">
+              <span class="text-sm ${item.completed ? 'line-through opacity-50' : ''}">${item.title}</span>
+              <div class="flex gap-2">
+                <button onclick="toggleTask('${docSnap.id}', ${!item.completed})" class="text-xs px-2 py-1 rounded card-theme border">${item.completed ? 'Undo' : 'Done'}</button>
+                <button onclick="deleteDocItem('tasks', '${docSnap.id}')" class="text-xs text-red-400 px-2 py-1">✕</button>
+              </div>
+            </div>`;
+        });
+      });
+
+      // Events Realtime Sync
+      onSnapshot(collection(db, "events"), (snapshot) => {
+        const list = document.getElementById('eventList');
+        list.innerHTML = '';
+        snapshot.forEach((docSnap) => {
+          const item = docSnap.data();
+          list.innerHTML += `
+            <div class="flex items-center justify-between p-3 rounded-xl card-theme border">
+              <div>
+                <p class="text-sm font-semibold">${item.title}</p>
+                <p class="text-xs text-muted">${new Date(item.date).toLocaleString()}</p>
+              </div>
+              <button onclick="deleteDocItem('events', '${docSnap.id}')" class="text-xs text-red-400 px-2 py-1">✕</button>
+            </div>`;
+        });
+      });
+    }
+
+    // Database Actions
+    window.addGroceryItem = async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('groceryInput');
+      await addDoc(collection(db, "groceries"), { name: input.value, completed: false, createdAt: Date.now() });
+      input.value = '';
+    };
+
+    window.addTaskItem = async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('taskInput');
+      await addDoc(collection(db, "tasks"), { title: input.value, completed: false, createdAt: Date.now() });
+      input.value = '';
+    };
+
+    window.addEventItem = async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('eventTitle');
+      const date = document.getElementById('eventDate');
+      await addDoc(collection(db, "events"), { title: title.value, date: date.value, createdAt: Date.now() });
+      title.value = '';
+      date.value = '';
+    };
+
+    window.toggleGrocery = async (id, completed) => {
+      await updateDoc(doc(db, "groceries", id), { completed });
+    };
+
+    window.toggleTask = async (id, completed) => {
+      await updateDoc(doc(db, "tasks", id), { completed });
+    };
+
+    window.deleteDocItem = async (col, id) => {
+      await deleteDoc(doc(db, col, id));
+    };
+  </script>
 </body>
 </html>
