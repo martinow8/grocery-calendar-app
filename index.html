@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" data-theme="grey">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,29 +9,12 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
 
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            theme: {
-              bg: 'var(--bg-main)',
-              card: 'var(--bg-card)',
-              border: 'var(--border-color)',
-              primary: 'var(--primary-color)',
-              primaryHover: 'var(--primary-hover)',
-              text: 'var(--text-color)',
-              muted: 'var(--text-muted)'
-            }
-          }
-        }
-      }
-    }
-  </script>
+  
   <style>
-    :root[data-theme="grey"] {
+    /* Theme Definitions */
+    :root[data-theme="grey"], :root {
       --bg-main: #0f172a;
       --bg-card: #1e293b;
       --border-color: #334155;
@@ -51,29 +34,42 @@
       --text-muted: #f472b6;
     }
 
+    /* Core Styles */
     body {
-      background-color: var(--bg-main);
-      color: var(--text-color);
+      background-color: var(--bg-main) !important;
+      color: var(--text-color) !important;
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     .card-theme {
       background-color: var(--bg-card);
       border-color: var(--border-color);
+      color: var(--text-color);
       transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     .btn-primary {
-      background-color: var(--primary-color);
-      color: #ffffff;
+      background-color: var(--primary-color) !important;
+      color: #ffffff !important;
       transition: background-color 0.2s ease;
     }
+    
     .btn-primary:hover {
-      background-color: var(--primary-hover);
+      background-color: var(--primary-hover) !important;
     }
 
     .text-muted {
+      color: var(--text-muted) !important;
+    }
+
+    input {
+      color: var(--text-color);
+      background-color: var(--bg-card);
+    }
+
+    input::placeholder {
       color: var(--text-muted);
+      opacity: 0.7;
     }
   </style>
 </head>
@@ -277,6 +273,11 @@
       });
     };
 
+    // Helper function to sanitize user text (prevent XSS / syntax issues)
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
     // Shared Collection Listeners
     function listenToCollections() {
       onSnapshot(collection(db, "groceries"), (snapshot) => {
@@ -284,9 +285,10 @@
         list.innerHTML = '';
         snapshot.forEach((docSnap) => {
           const item = docSnap.data();
+          const cleanName = escapeHtml(item.name);
           list.innerHTML += `
             <div class="flex items-center justify-between p-3 rounded-xl card-theme border">
-              <span class="text-sm ${item.completed ? 'line-through opacity-50' : ''}">${item.name}</span>
+              <span class="text-sm ${item.completed ? 'line-through opacity-50' : ''}">${cleanName}</span>
               <div class="flex gap-2">
                 <button onclick="toggleGrocery('${docSnap.id}', ${!item.completed})" class="text-xs px-2 py-1 rounded card-theme border">${item.completed ? 'Undo' : 'Done'}</button>
                 <button onclick="deleteDocItem('groceries', '${docSnap.id}')" class="text-xs text-red-400 px-2 py-1">✕</button>
@@ -300,9 +302,10 @@
         list.innerHTML = '';
         snapshot.forEach((docSnap) => {
           const item = docSnap.data();
+          const cleanTitle = escapeHtml(item.title);
           list.innerHTML += `
             <div class="flex items-center justify-between p-3 rounded-xl card-theme border">
-              <span class="text-sm ${item.completed ? 'line-through opacity-50' : ''}">${item.title}</span>
+              <span class="text-sm ${item.completed ? 'line-through opacity-50' : ''}">${cleanTitle}</span>
               <div class="flex gap-2">
                 <button onclick="toggleTask('${docSnap.id}', ${!item.completed})" class="text-xs px-2 py-1 rounded card-theme border">${item.completed ? 'Undo' : 'Done'}</button>
                 <button onclick="deleteDocItem('tasks', '${docSnap.id}')" class="text-xs text-red-400 px-2 py-1">✕</button>
@@ -316,10 +319,11 @@
         list.innerHTML = '';
         snapshot.forEach((docSnap) => {
           const item = docSnap.data();
+          const cleanTitle = escapeHtml(item.title);
           list.innerHTML += `
             <div class="flex items-center justify-between p-3 rounded-xl card-theme border">
               <div>
-                <p class="text-sm font-semibold">${item.title}</p>
+                <p class="text-sm font-semibold">${cleanTitle}</p>
                 <p class="text-xs text-muted">${new Date(item.date).toLocaleString()}</p>
               </div>
               <button onclick="deleteDocItem('events', '${docSnap.id}')" class="text-xs text-red-400 px-2 py-1">✕</button>
