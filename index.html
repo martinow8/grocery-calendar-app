@@ -109,6 +109,16 @@
     </section>
   </main>
 
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker Registered!', reg))
+          .catch(err => console.error('SW Registration Failed:', err));
+      });
+    }
+  </script>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -127,10 +137,11 @@
     const auth = getAuth(app), db = getFirestore(app);
     setPersistence(auth, browserLocalPersistence);
 
-    let isSignUp = false, loadedEvents = [], isInitialLoad = { groceries: true, tasks: true, events: true };
+    let isSignUp = false, loadedEvents = [];
+    let isInitialLoad = { groceries: true, tasks: true, events: true };
     let currentDate = new Date(), selectedDateStr = new Date().toISOString().split('T')[0];
 
-    // Request Notification Permission
+    // Notification permission request
     window.requestNotificationPermission = async () => {
       if ('Notification' in window) {
         const permission = await Notification.requestPermission();
@@ -141,14 +152,24 @@
       }
     };
 
-    // Trigger Browser Push Notification Locally
-    function showLocalNotification(title, body) {
+    // Helper for Service Worker Notifications
+    async function showLocalNotification(title, body) {
       if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(title, { body, icon: 'https://cdn-icons-png.flaticon.com/512/3119/3119338.png' });
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.ready;
+          reg.showNotification(title, {
+            body: body,
+            icon: 'https://cdn-icons-png.flaticon.com/512/3119/3119338.png',
+            badge: 'https://cdn-icons-png.flaticon.com/512/3119/3119338.png',
+            vibrate: [200, 100, 200]
+          });
+        } else {
+          new Notification(title, { body });
+        }
       }
     }
 
-    // Theme & UI
+    // Theme logic
     window.toggleTheme = () => setTheme((document.documentElement.getAttribute('data-theme') || 'grey') === 'grey' ? 'pink' : 'grey');
     function setTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
@@ -158,6 +179,7 @@
     }
     setTheme(localStorage.getItem('lifesync_theme') || 'grey');
 
+    // Auth logic
     window.toggleAuthMode = () => {
       isSignUp = !isSignUp;
       document.getElementById('authTitle').innerText = isSignUp ? 'Create Account' : 'Welcome Back';
@@ -180,21 +202,18 @@
     };
     window.handleLogout = () => signOut(auth);
 
-onAuthStateChanged(auth, user => {
-  currentUser = user;
-  
-  document.getElementById('authScreen').classList.toggle('hidden', !!user);
-  document.getElementById('appScreen').classList.toggle('hidden', !user);
-  document.getElementById('logoutBtn').classList.toggle('hidden', !user);
-  document.getElementById('notifyBtn').classList.toggle('hidden', !user || (window.Notification && Notification.permission === 'granted'));
+    onAuthStateChanged(auth, user => {
+      document.getElementById('authScreen').classList.toggle('hidden', !!user);
+      document.getElementById('appScreen').classList.toggle('hidden', !user);
+      document.getElementById('logoutBtn').classList.toggle('hidden', !user);
+      document.getElementById('notifyBtn').classList.toggle('hidden', !user || (window.Notification && Notification.permission === 'granted'));
+      if (user) {
+        listenToCollections();
+        renderCalendar();
+      }
+    });
 
-  if (user) {
-    // Извикваме слушателите САМО след като потребителят е успешно логнат
-    listenToCollections();
-    renderCalendar();
-  }
-});
-
+    // Navigation
     window.switchTab = tab => ['groceries', 'tasks', 'events'].forEach(t => {
       document.getElementById(`section-${t}`).classList.toggle('hidden', t !== tab);
       document.getElementById(`tab-${t}`).className = `py-2.5 text-xs font-bold rounded-lg transition-all ${t === tab ? 'btn-primary' : 'text-muted hover:bg-white/5'}`;
@@ -202,6 +221,7 @@ onAuthStateChanged(auth, user => {
 
     const escapeHtml = str => (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 
+    // Calendar
     window.changeMonth = offset => { currentDate.setMonth(currentDate.getMonth() + offset); renderCalendar(); };
     window.jumpToDate = dateStr => {
       if (!dateStr) return;
@@ -243,17 +263,17 @@ onAuthStateChanged(auth, user => {
       });
     }
 
-    // Real-Time Database Listener + Free Notifications
+    // Real-Time Listeners
     function listenToCollections() {
-      // 1. Groceries Listener
+      // Groceries
       onSnapshot(collection(db, 'groceries'), snapshot => {
         const list = document.getElementById('groceryList');
         list.innerHTML = '';
-        
+
         snapshot.docChanges().forEach(change => {
           if (change.type === "added" && !isInitialLoad.groceries) {
             const data = change.doc.data();
-            showLocalNotification("🛒 New Grocery Added!", `${data.name} (${data.category}) was added.`);
+            showLocalNotification("🛒 New Grocery Added!", `${data.name} (${data.category || 'Other'}) was added.`);
           }
         });
         isInitialLoad.groceries = false;
@@ -264,7 +284,7 @@ onAuthStateChanged(auth, user => {
         });
       });
 
-      // 2. Tasks Listener
+      // Tasks
       onSnapshot(collection(db, 'tasks'), snapshot => {
         const list = document.getElementById('taskList');
         list.innerHTML = '';
@@ -283,9 +303,10 @@ onAuthStateChanged(auth, user => {
         });
       });
 
-      // 3. Events Listener
+      // Events
       onSnapshot(collection(db, 'events'), snapshot => {
         loadedEvents = [];
+
         snapshot.docChanges().forEach(change => {
           if (change.type === "added" && !isInitialLoad.events) {
             const data = change.doc.data();
@@ -299,6 +320,7 @@ onAuthStateChanged(auth, user => {
       });
     }
 
+    // CRUD Actions
     window.addGroceryItem = async e => {
       e.preventDefault();
       const input = document.getElementById('groceryInput'), category = document.getElementById('groceryCategory');
