@@ -109,13 +109,10 @@
     </section>
   </main>
 
-  <script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./firebase-messaging-sw.js').catch(err=>console.log('SW Registration Failed:',err)));</script>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDTOMSxOalImT4osNh5qdBH9tNBYGZYzY",
@@ -127,38 +124,31 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app), db = getFirestore(app), messaging = getMessaging(app);
+    const auth = getAuth(app), db = getFirestore(app);
     setPersistence(auth, browserLocalPersistence);
 
-    let isSignUp = false, loadedEvents = [], currentUser = null;
+    let isSignUp = false, loadedEvents = [], isInitialLoad = { groceries: true, tasks: true, events: true };
     let currentDate = new Date(), selectedDateStr = new Date().toISOString().split('T')[0];
 
-    // Notification Setup
+    // Request Notification Permission
     window.requestNotificationPermission = async () => {
-      try {
+      if ('Notification' in window) {
         const permission = await Notification.requestPermission();
-        if (permission === 'granted' && currentUser) {
-          // Заменете 'YOUR_VAPID_PUBLIC_KEY' с вашия VAPID Key от Firebase Console
-          const token = await getToken(messaging, { vapidKey: 'YOUR_VAPID_PUBLIC_KEY' });
-          if (token) {
-            await setDoc(doc(db, 'fcmTokens', currentUser.uid), { token, email: currentUser.email, updatedAt: Date.now() });
-            alert("Notifications enabled successfully!");
-            document.getElementById('notifyBtn').classList.add('hidden');
-          }
+        if (permission === 'granted') {
+          alert("Notifications Enabled!");
+          document.getElementById('notifyBtn').classList.add('hidden');
         }
-      } catch (err) {
-        console.error("Notification permission error:", err);
       }
     };
 
-    onMessage(messaging, (payload) => {
-      new Notification(payload.notification.title, {
-        body: payload.notification.body,
-        icon: 'https://cdn-icons-png.flaticon.com/512/3119/3119338.png'
-      });
-    });
+    // Trigger Browser Push Notification Locally
+    function showLocalNotification(title, body) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, { body, icon: 'https://cdn-icons-png.flaticon.com/512/3119/3119338.png' });
+      }
+    }
 
-    // Theme & UI logic
+    // Theme & UI
     window.toggleTheme = () => setTheme((document.documentElement.getAttribute('data-theme') || 'grey') === 'grey' ? 'pink' : 'grey');
     function setTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
@@ -191,11 +181,10 @@
     window.handleLogout = () => signOut(auth);
 
     onAuthStateChanged(auth, user => {
-      currentUser = user;
       document.getElementById('authScreen').classList.toggle('hidden', !!user);
       document.getElementById('appScreen').classList.toggle('hidden', !user);
       document.getElementById('logoutBtn').classList.toggle('hidden', !user);
-      document.getElementById('notifyBtn').classList.toggle('hidden', !user || Notification.permission === 'granted');
+      document.getElementById('notifyBtn').classList.toggle('hidden', !user || (window.Notification && Notification.permission === 'granted'));
       if (user) {
         listenToCollections();
         renderCalendar();
@@ -250,25 +239,57 @@
       });
     }
 
+    // Real-Time Database Listener + Free Notifications
     function listenToCollections() {
+      // 1. Groceries Listener
       onSnapshot(collection(db, 'groceries'), snapshot => {
         const list = document.getElementById('groceryList');
         list.innerHTML = '';
+        
+        snapshot.docChanges().forEach(change => {
+          if (change.type === "added" && !isInitialLoad.groceries) {
+            const data = change.doc.data();
+            showLocalNotification("🛒 New Grocery Added!", `${data.name} (${data.category}) was added.`);
+          }
+        });
+        isInitialLoad.groceries = false;
+
         snapshot.forEach(s => {
           const i = s.data(), category = i.category || 'Other';
           list.innerHTML += `<div class="flex items-center justify-between gap-3 p-3 rounded-xl card-theme border"><div class="min-w-0"><span class="text-sm ${i.completed ? 'line-through opacity-50' : ''}">${escapeHtml(i.name)}</span><span class="block text-xs text-muted mt-1">${escapeHtml(category)}</span></div><div class="flex gap-2 shrink-0"><button onclick="toggleGrocery('${s.id}',${!i.completed})" class="text-xs px-2 py-1 rounded card-theme border">${i.completed ? 'Undo' : 'Done'}</button><button onclick="deleteDocItem('groceries','${s.id}')" class="text-xs text-red-400 px-2 py-1">✕</button></div></div>`;
         });
       });
+
+      // 2. Tasks Listener
       onSnapshot(collection(db, 'tasks'), snapshot => {
         const list = document.getElementById('taskList');
         list.innerHTML = '';
+
+        snapshot.docChanges().forEach(change => {
+          if (change.type === "added" && !isInitialLoad.tasks) {
+            const data = change.doc.data();
+            showLocalNotification("📋 New Task Added!", data.title);
+          }
+        });
+        isInitialLoad.tasks = false;
+
         snapshot.forEach(s => {
           const i = s.data();
           list.innerHTML += `<div class="flex items-center justify-between p-3 rounded-xl card-theme border"><span class="text-sm ${i.completed ? 'line-through opacity-50' : ''}">${escapeHtml(i.title)}</span><div class="flex gap-2"><button onclick="toggleTask('${s.id}',${!i.completed})" class="text-xs px-2 py-1 rounded card-theme border">${i.completed ? 'Undo' : 'Done'}</button><button onclick="deleteDocItem('tasks','${s.id}')" class="text-xs text-red-400 px-2 py-1">✕</button></div></div>`;
         });
       });
+
+      // 3. Events Listener
       onSnapshot(collection(db, 'events'), snapshot => {
         loadedEvents = [];
+        snapshot.docChanges().forEach(change => {
+          if (change.type === "added" && !isInitialLoad.events) {
+            const data = change.doc.data();
+            showLocalNotification("📅 New Calendar Event!", data.title);
+          }
+        });
+        isInitialLoad.events = false;
+
         snapshot.forEach(s => loadedEvents.push({ id: s.id, ...s.data() }));
         renderCalendar(); renderEvents();
       });
