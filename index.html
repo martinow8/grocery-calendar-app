@@ -14,32 +14,288 @@
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans">
-  <header class="card-theme border-b p-4 flex justify-between items-center sticky top-0 z-50"><h1 class="text-xl font-bold tracking-wide">LifeSync Hub</h1><div class="flex items-center gap-3"><button id="themeToggleBtn" onclick="toggleTheme()" class="p-2 rounded-lg card-theme border hover:opacity-80 flex items-center gap-2 text-xs font-semibold"><span id="themeIcon">⚙️</span><span id="themeLabel">Grey Theme</span></button><button id="logoutBtn" onclick="handleLogout()" class="hidden text-xs bg-red-600/20 text-red-400 hover:bg-red-600/30 px-3 py-2 rounded-lg font-semibold border border-red-500/30">Sign Out</button></div></header>
-  <main id="authScreen" class="flex-1 flex items-center justify-center p-4"><div class="card-theme border rounded-2xl p-6 w-full max-w-sm shadow-xl"><h2 id="authTitle" class="text-2xl font-bold mb-2 text-center">Welcome Back</h2><p class="text-xs text-muted mb-6 text-center">Sign in to access your synced grocery list, tasks, and calendar.</p><form id="authForm" onsubmit="handleAuth(event)" class="space-y-4"><div><label class="block text-xs font-semibold mb-1 text-muted">Email Address</label><input type="email" id="authEmail" required class="w-full p-3 rounded-lg card-theme border focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="user@example.com"></div><div><label class="block text-xs font-semibold mb-1 text-muted">Password</label><input type="password" id="authPassword" required minlength="6" class="w-full p-3 rounded-lg card-theme border focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="••••••••"></div><p id="authError" class="text-xs text-red-400 hidden"></p><button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-lg btn-primary font-bold text-sm shadow-lg">Sign In</button></form><div class="mt-4 text-center"><button onclick="toggleAuthMode()" id="authToggleModeBtn" class="text-xs text-muted hover:underline">Don't have an account? Sign Up</button></div></div></main>
-  <main id="appScreen" class="flex-1 max-w-2xl w-full mx-auto p-4 space-y-6 hidden pb-24">
-    <div class="grid grid-cols-3 gap-2 card-theme p-1.5 rounded-xl border"><button onclick="switchTab('groceries')" id="tab-groceries" class="py-2.5 text-xs font-bold rounded-lg transition-all btn-primary">🛒 Groceries</button><button onclick="switchTab('tasks')" id="tab-tasks" class="py-2.5 text-xs font-bold rounded-lg transition-all text-muted hover:bg-white/5">📋 Tasks</button><button onclick="switchTab('events')" id="tab-events" class="py-2.5 text-xs font-bold rounded-lg transition-all text-muted hover:bg-white/5">📅 Calendar</button></div>
-    <section id="section-groceries" class="space-y-4"><form onsubmit="addGroceryItem(event)" class="grid grid-cols-[1fr_auto_auto] gap-2"><input type="text" id="groceryInput" placeholder="Add grocery item..." required class="min-w-0 p-3 rounded-xl card-theme border focus:outline-none focus:ring-2 text-sm"><select id="groceryCategory" aria-label="Grocery category" class="p-3 rounded-xl card-theme border focus:outline-none focus:ring-2 text-sm"><option value="Produce">🥬 Produce</option><option value="Dairy">🥛 Dairy</option><option value="Meat & Fish">🥩 Meat & Fish</option><option value="Pantry">🥫 Pantry</option><option value="Frozen">❄️ Frozen</option><option value="Bakery">🍞 Bakery</option><option value="Beverages">🥤 Beverages</option><option value="Household">🧽 Household</option><option value="Other" selected>📦 Other</option></select><button type="submit" class="px-5 rounded-xl btn-primary font-bold text-sm">Add</button></form><div id="groceryList" class="space-y-2"></div></section>
-    <section id="section-tasks" class="space-y-4 hidden"><form onsubmit="addTaskItem(event)" class="flex gap-2"><input type="text" id="taskInput" placeholder="Add new task..." required class="flex-1 p-3 rounded-xl card-theme border focus:outline-none focus:ring-2 text-sm"><button type="submit" class="px-5 rounded-xl btn-primary font-bold text-sm">Add</button></form><div id="taskList" class="space-y-2"></div></section>
-    <section id="section-events" class="space-y-4 hidden"><div class="card-theme p-4 rounded-xl border space-y-3"><div class="flex items-center justify-between"><button onclick="changeMonth(-1)" class="p-2 text-sm font-bold rounded-lg card-theme border hover:opacity-80">←</button><h3 id="calendarMonthYear" class="text-sm font-bold tracking-wide"></h3><button onclick="changeMonth(1)" class="p-2 text-sm font-bold rounded-lg card-theme border hover:opacity-80">→</button></div><div class="flex items-center gap-2"><label for="calendarDatePicker" class="text-xs font-semibold text-muted">Jump to date</label><input type="date" id="calendarDatePicker" onchange="jumpToDate(this.value)" class="flex-1 p-2 rounded-lg card-theme border text-sm"></div><div class="grid grid-cols-7 text-center text-xs font-semibold text-muted"><div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div></div><div id="calendarDays" class="grid grid-cols-7 gap-1"></div></div><form onsubmit="addEventItem(event)" class="space-y-2 card-theme p-4 rounded-xl border"><div class="flex items-center justify-between mb-1"><label class="text-xs font-bold text-muted">Add Event for Selected Day</label><span id="selectedDateDisplay" class="text-xs font-semibold text-muted"></span></div><input type="text" id="eventTitle" placeholder="Event Title" required class="w-full p-2.5 rounded-lg card-theme border text-sm"><input type="time" id="eventTime" required class="w-full p-2.5 rounded-lg card-theme border text-sm"><button type="submit" class="w-full py-2.5 rounded-lg btn-primary font-bold text-sm">Add Event</button></form><div class="space-y-2"><h4 class="text-xs font-bold text-muted px-1">Events on Selected Date</h4><div id="eventList" class="space-y-2"></div></div></section>
+  <header class="card-theme border-b p-4 flex justify-between items-center sticky top-0 z-50">
+    <h1 class="text-xl font-bold tracking-wide">LifeSync Hub</h1>
+    <div class="flex items-center gap-3">
+      <button id="notifyBtn" onclick="requestNotificationPermission()" class="hidden p-2 rounded-lg card-theme border hover:opacity-80 text-xs font-semibold">🔔 Enable Notifications</button>
+      <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2 rounded-lg card-theme border hover:opacity-80 flex items-center gap-2 text-xs font-semibold"><span id="themeIcon">⚙️</span><span id="themeLabel">Grey Theme</span></button>
+      <button id="logoutBtn" onclick="handleLogout()" class="hidden text-xs bg-red-600/20 text-red-400 hover:bg-red-600/30 px-3 py-2 rounded-lg font-semibold border border-red-500/30">Sign Out</button>
+    </div>
+  </header>
+
+  <main id="authScreen" class="flex-1 flex items-center justify-center p-4">
+    <div class="card-theme border rounded-2xl p-6 w-full max-w-sm shadow-xl">
+      <h2 id="authTitle" class="text-2xl font-bold mb-2 text-center">Welcome Back</h2>
+      <p class="text-xs text-muted mb-6 text-center">Sign in to access your synced grocery list, tasks, and calendar.</p>
+      <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-muted">Email Address</label>
+          <input type="email" id="authEmail" required class="w-full p-3 rounded-lg card-theme border focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="user@example.com">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-muted">Password</label>
+          <input type="password" id="authPassword" required minlength="6" class="w-full p-3 rounded-lg card-theme border focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="••••••••">
+        </div>
+        <p id="authError" class="text-xs text-red-400 hidden"></p>
+        <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-lg btn-primary font-bold text-sm shadow-lg">Sign In</button>
+      </form>
+      <div class="mt-4 text-center">
+        <button onclick="toggleAuthMode()" id="authToggleModeBtn" class="text-xs text-muted hover:underline">Don't have an account? Sign Up</button>
+      </div>
+    </div>
   </main>
-  <script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.log('Service Worker Registration Failed:',err)));</script>
+
+  <main id="appScreen" class="flex-1 max-w-2xl w-full mx-auto p-4 space-y-6 hidden pb-24">
+    <div class="grid grid-cols-3 gap-2 card-theme p-1.5 rounded-xl border">
+      <button onclick="switchTab('groceries')" id="tab-groceries" class="py-2.5 text-xs font-bold rounded-lg transition-all btn-primary">🛒 Groceries</button>
+      <button onclick="switchTab('tasks')" id="tab-tasks" class="py-2.5 text-xs font-bold rounded-lg transition-all text-muted hover:bg-white/5">📋 Tasks</button>
+      <button onclick="switchTab('events')" id="tab-events" class="py-2.5 text-xs font-bold rounded-lg transition-all text-muted hover:bg-white/5">📅 Calendar</button>
+    </div>
+
+    <section id="section-groceries" class="space-y-4">
+      <form onsubmit="addGroceryItem(event)" class="grid grid-cols-[1fr_auto_auto] gap-2">
+        <input type="text" id="groceryInput" placeholder="Add grocery item..." required class="min-w-0 p-3 rounded-xl card-theme border focus:outline-none focus:ring-2 text-sm">
+        <select id="groceryCategory" aria-label="Grocery category" class="p-3 rounded-xl card-theme border focus:outline-none focus:ring-2 text-sm">
+          <option value="Produce">🥬 Produce</option>
+          <option value="Dairy">🥛 Dairy</option>
+          <option value="Meat & Fish">🥩 Meat & Fish</option>
+          <option value="Pantry">🥫 Pantry</option>
+          <option value="Frozen">❄️ Frozen</option>
+          <option value="Bakery">🍞 Bakery</option>
+          <option value="Beverages">🥤 Beverages</option>
+          <option value="Household">🧽 Household</option>
+          <option value="Other" selected>📦 Other</option>
+        </select>
+        <button type="submit" class="px-5 rounded-xl btn-primary font-bold text-sm">Add</button>
+      </form>
+      <div id="groceryList" class="space-y-2"></div>
+    </section>
+
+    <section id="section-tasks" class="space-y-4 hidden">
+      <form onsubmit="addTaskItem(event)" class="flex gap-2">
+        <input type="text" id="taskInput" placeholder="Add new task..." required class="flex-1 p-3 rounded-xl card-theme border focus:outline-none focus:ring-2 text-sm">
+        <button type="submit" class="px-5 rounded-xl btn-primary font-bold text-sm">Add</button>
+      </form>
+      <div id="taskList" class="space-y-2"></div>
+    </section>
+
+    <section id="section-events" class="space-y-4 hidden">
+      <div class="card-theme p-4 rounded-xl border space-y-3">
+        <div class="flex items-center justify-between">
+          <button onclick="changeMonth(-1)" class="p-2 text-sm font-bold rounded-lg card-theme border hover:opacity-80">←</button>
+          <h3 id="calendarMonthYear" class="text-sm font-bold tracking-wide"></h3>
+          <button onclick="changeMonth(1)" class="p-2 text-sm font-bold rounded-lg card-theme border hover:opacity-80">→</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="calendarDatePicker" class="text-xs font-semibold text-muted">Jump to date</label>
+          <input type="date" id="calendarDatePicker" onchange="jumpToDate(this.value)" class="flex-1 p-2 rounded-lg card-theme border text-sm">
+        </div>
+        <div class="grid grid-cols-7 text-center text-xs font-semibold text-muted"><div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div></div>
+        <div id="calendarDays" class="grid grid-cols-7 gap-1"></div>
+      </div>
+      <form onsubmit="addEventItem(event)" class="space-y-2 card-theme p-4 rounded-xl border">
+        <div class="flex items-center justify-between mb-1">
+          <label class="text-xs font-bold text-muted">Add Event for Selected Day</label>
+          <span id="selectedDateDisplay" class="text-xs font-semibold text-muted"></span>
+        </div>
+        <input type="text" id="eventTitle" placeholder="Event Title" required class="w-full p-2.5 rounded-lg card-theme border text-sm">
+        <input type="time" id="eventTime" required class="w-full p-2.5 rounded-lg card-theme border text-sm">
+        <button type="submit" class="w-full py-2.5 rounded-lg btn-primary font-bold text-sm">Add Event</button>
+      </form>
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-muted px-1">Events on Selected Date</h4>
+        <div id="eventList" class="space-y-2"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./firebase-messaging-sw.js').catch(err=>console.log('SW Registration Failed:',err)));</script>
+
   <script type="module">
-    import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import {getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,onAuthStateChanged,signOut,setPersistence,browserLocalPersistence} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import {getFirestore,collection,addDoc,onSnapshot,deleteDoc,doc,updateDoc} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    const app=initializeApp({apiKey:"AIzaSyDTOMSxOalImT4osNh5qdBH9tNBYGZYzY",authDomain:"grocery-calendar-app.firebaseapp.com",projectId:"grocery-calendar-app",storageBucket:"grocery-calendar-app.firebasestorage.app",messagingSenderId:"878403563311",appId:"1:878403563311:web:7f11d993506c81cb7b7bda"});
-    const auth=getAuth(app),db=getFirestore(app);setPersistence(auth,browserLocalPersistence);let isSignUp=false,loadedEvents=[];let currentDate=new Date(),selectedDateStr=new Date().toISOString().split('T')[0];
-    window.toggleTheme=()=>setTheme((document.documentElement.getAttribute('data-theme')||'grey')==='grey'?'pink':'grey');function setTheme(theme){document.documentElement.setAttribute('data-theme',theme);localStorage.setItem('lifesync_theme',theme);document.getElementById('themeLabel').innerText=theme==='pink'?'Pink Theme':'Grey Theme';document.getElementById('themeIcon').innerText=theme==='pink'?'🌸':'⚙️'}setTheme(localStorage.getItem('lifesync_theme')||'grey');
-    window.toggleAuthMode=()=>{isSignUp=!isSignUp;document.getElementById('authTitle').innerText=isSignUp?'Create Account':'Welcome Back';document.getElementById('authSubmitBtn').innerText=isSignUp?'Sign Up':'Sign In';document.getElementById('authToggleModeBtn').innerText=isSignUp?'Already have an account? Sign In':"Don't have an account? Sign Up"};
-    window.handleAuth=async e=>{e.preventDefault();const errorEl=document.getElementById('authError');errorEl.classList.add('hidden');try{const email=document.getElementById('authEmail').value,password=document.getElementById('authPassword').value;if(isSignUp)await createUserWithEmailAndPassword(auth,email,password);else await signInWithEmailAndPassword(auth,email,password)}catch(err){errorEl.innerText=err.message;errorEl.classList.remove('hidden')}};window.handleLogout=()=>signOut(auth);
-    onAuthStateChanged(auth,user=>{document.getElementById('authScreen').classList.toggle('hidden',!!user);document.getElementById('appScreen').classList.toggle('hidden',!user);document.getElementById('logoutBtn').classList.toggle('hidden',!user);if(user){listenToCollections();renderCalendar()}});
-    window.switchTab=tab=>['groceries','tasks','events'].forEach(t=>{document.getElementById(`section-${t}`).classList.toggle('hidden',t!==tab);document.getElementById(`tab-${t}`).className=`py-2.5 text-xs font-bold rounded-lg transition-all ${t===tab?'btn-primary':'text-muted hover:bg-white/5'}`});
-    const escapeHtml=str=>(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-    window.changeMonth=offset=>{currentDate.setMonth(currentDate.getMonth()+offset);renderCalendar()};window.jumpToDate=dateStr=>{if(!dateStr)return;selectedDateStr=dateStr;const date=new Date(`${dateStr}T00:00:00`);currentDate=new Date(date.getFullYear(),date.getMonth(),1);renderCalendar();renderEvents()};window.selectDate=dateStr=>{selectedDateStr=dateStr;document.getElementById('calendarDatePicker').value=dateStr;const date=new Date(`${dateStr}T00:00:00`);currentDate=new Date(date.getFullYear(),date.getMonth(),1);renderCalendar();renderEvents()};
-    function renderCalendar(){const year=currentDate.getFullYear(),month=currentDate.getMonth(),names=['January','February','March','April','May','June','July','August','September','October','November','December'];document.getElementById('calendarMonthYear').innerText=`${names[month]} ${year}`;document.getElementById('calendarDatePicker').value=selectedDateStr;document.getElementById('selectedDateDisplay').innerText=new Date(selectedDateStr+'T00:00:00').toLocaleDateString(undefined,{dateStyle:'medium'});const days=document.getElementById('calendarDays');days.innerHTML='';for(let i=0;i<new Date(year,month,1).getDay();i++)days.innerHTML+='<div class="cal-day empty"></div>';for(let day=1;day<=new Date(year,month+1,0).getDate();day++){const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`,selected=dateStr===selectedDateStr?'selected':'',has=loadedEvents.some(e=>e.date&&e.date.startsWith(dateStr))?'has-event':'';days.innerHTML+=`<div onclick="selectDate('${dateStr}')" class="cal-day ${selected} ${has}">${day}</div>`}}
-    function renderEvents(){const list=document.getElementById('eventList');list.innerHTML='';const events=loadedEvents.filter(e=>e.date&&e.date.startsWith(selectedDateStr));if(!events.length){list.innerHTML='<p class="text-xs text-muted italic p-2">No events scheduled for this day.</p>';return}events.forEach(item=>{const time=item.date.includes('T')?item.date.split('T')[1]:'';list.innerHTML+=`<div class="flex items-center justify-between p-3 rounded-xl card-theme border"><div><p class="text-sm font-semibold">${escapeHtml(item.title)}</p>${time?`<p class="text-xs text-muted">🕒 ${time}</p>`:''}</div><button onclick="deleteDocItem('events','${item.id}')" class="text-xs text-red-400 px-2 py-1">✕</button></div>`})}
-    function listenToCollections(){onSnapshot(collection(db,'groceries'),snapshot=>{const list=document.getElementById('groceryList');list.innerHTML='';snapshot.forEach(s=>{const i=s.data(),category=i.category||'Other';list.innerHTML+=`<div class="flex items-center justify-between gap-3 p-3 rounded-xl card-theme border"><div class="min-w-0"><span class="text-sm ${i.completed?'line-through opacity-50':''}">${escapeHtml(i.name)}</span><span class="block text-xs text-muted mt-1">${escapeHtml(category)}</span></div><div class="flex gap-2 shrink-0"><button onclick="toggleGrocery('${s.id}',${!i.completed})" class="text-xs px-2 py-1 rounded card-theme border">${i.completed?'Undo':'Done'}</button><button onclick="deleteDocItem('groceries','${s.id}')" class="text-xs text-red-400 px-2 py-1">✕</button></div></div>`})});onSnapshot(collection(db,'tasks'),snapshot=>{const list=document.getElementById('taskList');list.innerHTML='';snapshot.forEach(s=>{const i=s.data();list.innerHTML+=`<div class="flex items-center justify-between p-3 rounded-xl card-theme border"><span class="text-sm ${i.completed?'line-through opacity-50':''}">${escapeHtml(i.title)}</span><div class="flex gap-2"><button onclick="toggleTask('${s.id}',${!i.completed})" class="text-xs px-2 py-1 rounded card-theme border">${i.completed?'Undo':'Done'}</button><button onclick="deleteDocItem('tasks','${s.id}')" class="text-xs text-red-400 px-2 py-1">✕</button></div></div>`})});onSnapshot(collection(db,'events'),snapshot=>{loadedEvents=[];snapshot.forEach(s=>loadedEvents.push({id:s.id,...s.data()}));renderCalendar();renderEvents()})}
-    window.addGroceryItem=async e=>{e.preventDefault();const input=document.getElementById('groceryInput'),category=document.getElementById('groceryCategory');await addDoc(collection(db,'groceries'),{name:input.value,category:category.value,completed:false,createdAt:Date.now()});input.value='';category.value='Other'};window.addTaskItem=async e=>{e.preventDefault();const input=document.getElementById('taskInput');await addDoc(collection(db,'tasks'),{title:input.value,completed:false,createdAt:Date.now()});input.value=''};window.addEventItem=async e=>{e.preventDefault();const title=document.getElementById('eventTitle'),time=document.getElementById('eventTime');await addDoc(collection(db,'events'),{title:title.value,date:`${selectedDateStr}T${time.value}`,createdAt:Date.now()});title.value='';time.value=''};window.toggleGrocery=async(id,completed)=>updateDoc(doc(db,'groceries',id),{completed});window.toggleTask=async(id,completed)=>updateDoc(doc(db,'tasks',id),{completed});window.deleteDocItem=async(col,id)=>deleteDoc(doc(db,col,id));
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTOMSxOalImT4osNh5qdBH9tNBYGZYzY",
+      authDomain: "grocery-calendar-app.firebaseapp.com",
+      projectId: "grocery-calendar-app",
+      storageBucket: "grocery-calendar-app.firebasestorage.app",
+      messagingSenderId: "878403563311",
+      appId: "1:878403563311:web:7f11d993506c81cb7b7bda"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app), db = getFirestore(app), messaging = getMessaging(app);
+    setPersistence(auth, browserLocalPersistence);
+
+    let isSignUp = false, loadedEvents = [], currentUser = null;
+    let currentDate = new Date(), selectedDateStr = new Date().toISOString().split('T')[0];
+
+    // Notification Setup
+    window.requestNotificationPermission = async () => {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted' && currentUser) {
+          // Заменете 'YOUR_VAPID_PUBLIC_KEY' с вашия VAPID Key от Firebase Console
+          const token = await getToken(messaging, { vapidKey: 'YOUR_VAPID_PUBLIC_KEY' });
+          if (token) {
+            await setDoc(doc(db, 'fcmTokens', currentUser.uid), { token, email: currentUser.email, updatedAt: Date.now() });
+            alert("Notifications enabled successfully!");
+            document.getElementById('notifyBtn').classList.add('hidden');
+          }
+        }
+      } catch (err) {
+        console.error("Notification permission error:", err);
+      }
+    };
+
+    onMessage(messaging, (payload) => {
+      new Notification(payload.notification.title, {
+        body: payload.notification.body,
+        icon: 'https://cdn-icons-png.flaticon.com/512/3119/3119338.png'
+      });
+    });
+
+    // Theme & UI logic
+    window.toggleTheme = () => setTheme((document.documentElement.getAttribute('data-theme') || 'grey') === 'grey' ? 'pink' : 'grey');
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('lifesync_theme', theme);
+      document.getElementById('themeLabel').innerText = theme === 'pink' ? 'Pink Theme' : 'Grey Theme';
+      document.getElementById('themeIcon').innerText = theme === 'pink' ? '🌸' : '⚙️';
+    }
+    setTheme(localStorage.getItem('lifesync_theme') || 'grey');
+
+    window.toggleAuthMode = () => {
+      isSignUp = !isSignUp;
+      document.getElementById('authTitle').innerText = isSignUp ? 'Create Account' : 'Welcome Back';
+      document.getElementById('authSubmitBtn').innerText = isSignUp ? 'Sign Up' : 'Sign In';
+      document.getElementById('authToggleModeBtn').innerText = isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up";
+    };
+
+    window.handleAuth = async e => {
+      e.preventDefault();
+      const errorEl = document.getElementById('authError');
+      errorEl.classList.add('hidden');
+      try {
+        const email = document.getElementById('authEmail').value, password = document.getElementById('authPassword').value;
+        if (isSignUp) await createUserWithEmailAndPassword(auth, email, password);
+        else await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.classList.remove('hidden');
+      }
+    };
+    window.handleLogout = () => signOut(auth);
+
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      document.getElementById('authScreen').classList.toggle('hidden', !!user);
+      document.getElementById('appScreen').classList.toggle('hidden', !user);
+      document.getElementById('logoutBtn').classList.toggle('hidden', !user);
+      document.getElementById('notifyBtn').classList.toggle('hidden', !user || Notification.permission === 'granted');
+      if (user) {
+        listenToCollections();
+        renderCalendar();
+      }
+    });
+
+    window.switchTab = tab => ['groceries', 'tasks', 'events'].forEach(t => {
+      document.getElementById(`section-${t}`).classList.toggle('hidden', t !== tab);
+      document.getElementById(`tab-${t}`).className = `py-2.5 text-xs font-bold rounded-lg transition-all ${t === tab ? 'btn-primary' : 'text-muted hover:bg-white/5'}`;
+    });
+
+    const escapeHtml = str => (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
+    window.changeMonth = offset => { currentDate.setMonth(currentDate.getMonth() + offset); renderCalendar(); };
+    window.jumpToDate = dateStr => {
+      if (!dateStr) return;
+      selectedDateStr = dateStr;
+      const date = new Date(`${dateStr}T00:00:00`);
+      currentDate = new Date(date.getFullYear(), date.getMonth(), 1);
+      renderCalendar(); renderEvents();
+    };
+    window.selectDate = dateStr => {
+      selectedDateStr = dateStr;
+      document.getElementById('calendarDatePicker').value = dateStr;
+      const date = new Date(`${dateStr}T00:00:00`);
+      currentDate = new Date(date.getFullYear(), date.getMonth(), 1);
+      renderCalendar(); renderEvents();
+    };
+
+    function renderCalendar() {
+      const year = currentDate.getFullYear(), month = currentDate.getMonth(), names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      document.getElementById('calendarMonthYear').innerText = `${names[month]} ${year}`;
+      document.getElementById('calendarDatePicker').value = selectedDateStr;
+      document.getElementById('selectedDateDisplay').innerText = new Date(selectedDateStr + 'T00:00:00').toLocaleDateString(undefined, { dateStyle: 'medium' });
+      const days = document.getElementById('calendarDays');
+      days.innerHTML = '';
+      for (let i = 0; i < new Date(year, month, 1).getDay(); i++) days.innerHTML += '<div class="cal-day empty"></div>';
+      for (let day = 1; day <= new Date(year, month + 1, 0).getDate(); day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`, selected = dateStr === selectedDateStr ? 'selected' : '', has = loadedEvents.some(e => e.date && e.date.startsWith(dateStr)) ? 'has-event' : '';
+        days.innerHTML += `<div onclick="selectDate('${dateStr}')" class="cal-day ${selected} ${has}">${day}</div>`;
+      }
+    }
+
+    function renderEvents() {
+      const list = document.getElementById('eventList');
+      list.innerHTML = '';
+      const events = loadedEvents.filter(e => e.date && e.date.startsWith(selectedDateStr));
+      if (!events.length) { list.innerHTML = '<p class="text-xs text-muted italic p-2">No events scheduled for this day.</p>'; return; }
+      events.forEach(item => {
+        const time = item.date.includes('T') ? item.date.split('T')[1] : '';
+        list.innerHTML += `<div class="flex items-center justify-between p-3 rounded-xl card-theme border"><div><p class="text-sm font-semibold">${escapeHtml(item.title)}</p>${time ? `<p class="text-xs text-muted">🕒 ${time}</p>` : ''}</div><button onclick="deleteDocItem('events','${item.id}')" class="text-xs text-red-400 px-2 py-1">✕</button></div>`;
+      });
+    }
+
+    function listenToCollections() {
+      onSnapshot(collection(db, 'groceries'), snapshot => {
+        const list = document.getElementById('groceryList');
+        list.innerHTML = '';
+        snapshot.forEach(s => {
+          const i = s.data(), category = i.category || 'Other';
+          list.innerHTML += `<div class="flex items-center justify-between gap-3 p-3 rounded-xl card-theme border"><div class="min-w-0"><span class="text-sm ${i.completed ? 'line-through opacity-50' : ''}">${escapeHtml(i.name)}</span><span class="block text-xs text-muted mt-1">${escapeHtml(category)}</span></div><div class="flex gap-2 shrink-0"><button onclick="toggleGrocery('${s.id}',${!i.completed})" class="text-xs px-2 py-1 rounded card-theme border">${i.completed ? 'Undo' : 'Done'}</button><button onclick="deleteDocItem('groceries','${s.id}')" class="text-xs text-red-400 px-2 py-1">✕</button></div></div>`;
+        });
+      });
+      onSnapshot(collection(db, 'tasks'), snapshot => {
+        const list = document.getElementById('taskList');
+        list.innerHTML = '';
+        snapshot.forEach(s => {
+          const i = s.data();
+          list.innerHTML += `<div class="flex items-center justify-between p-3 rounded-xl card-theme border"><span class="text-sm ${i.completed ? 'line-through opacity-50' : ''}">${escapeHtml(i.title)}</span><div class="flex gap-2"><button onclick="toggleTask('${s.id}',${!i.completed})" class="text-xs px-2 py-1 rounded card-theme border">${i.completed ? 'Undo' : 'Done'}</button><button onclick="deleteDocItem('tasks','${s.id}')" class="text-xs text-red-400 px-2 py-1">✕</button></div></div>`;
+        });
+      });
+      onSnapshot(collection(db, 'events'), snapshot => {
+        loadedEvents = [];
+        snapshot.forEach(s => loadedEvents.push({ id: s.id, ...s.data() }));
+        renderCalendar(); renderEvents();
+      });
+    }
+
+    window.addGroceryItem = async e => {
+      e.preventDefault();
+      const input = document.getElementById('groceryInput'), category = document.getElementById('groceryCategory');
+      await addDoc(collection(db, 'groceries'), { name: input.value, category: category.value, completed: false, createdAt: Date.now() });
+      input.value = ''; category.value = 'Other';
+    };
+    window.addTaskItem = async e => {
+      e.preventDefault();
+      const input = document.getElementById('taskInput');
+      await addDoc(collection(db, 'tasks'), { title: input.value, completed: false, createdAt: Date.now() });
+      input.value = '';
+    };
+    window.addEventItem = async e => {
+      e.preventDefault();
+      const title = document.getElementById('eventTitle'), time = document.getElementById('eventTime');
+      await addDoc(collection(db, 'events'), { title: title.value, date: `${selectedDateStr}T${time.value}`, createdAt: Date.now() });
+      title.value = ''; time.value = '';
+    };
+
+    window.toggleGrocery = async (id, completed) => updateDoc(doc(db, 'groceries', id), { completed });
+    window.toggleTask = async (id, completed) => updateDoc(doc(db, 'tasks', id), { completed });
+    window.deleteDocItem = async (col, id) => deleteDoc(doc(db, col, id));
   </script>
 </body>
 </html>
