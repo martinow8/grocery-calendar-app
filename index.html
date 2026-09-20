@@ -5,17 +5,102 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FamSync</title>
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3900/3900235.png">
   <meta name="theme-color" content="#0f172a">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root[data-theme="grey"], :root { --bg-main:#0f172a;--bg-card:#1e293b;--border-color:#334155;--primary-color:#6366f1;--primary-hover:#4f46e5;--text-color:#f8fafc;--text-muted:#94a3b8; }
-    :root[data-theme="pink"] { --bg-main:#180811;--bg-card:#2d0d22;--border-color:#4a1538;--primary-color:#ec4899;--primary-hover:#db2777;--text-color:#fdf2f8;--text-muted:#f472b6; }
-    body{background-color:var(--bg-main)!important;color:var(--text-color)!important;transition:background-color .3s ease,color .3s ease}.card-theme{background-color:var(--bg-card);border-color:var(--border-color);color:var(--text-color)}.btn-primary{background-color:var(--primary-color)!important;color:#fff!important}.btn-primary:hover{background-color:var(--primary-hover)!important}.text-muted{color:var(--text-muted)!important}input,select{color:var(--text-color);background-color:var(--bg-card)}input::placeholder{color:var(--text-muted);opacity:.7}.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:.5rem;cursor:pointer;font-size:.875rem;font-weight:500;transition:all .2s}.cal-day:hover:not(.empty){background-color:rgba(255,255,255,.1)}.cal-day.selected{background-color:var(--primary-color)!important;color:#fff!important;font-weight:700}.cal-day.has-event{position:relative}.cal-day.has-event::after{content:'';position:absolute;bottom:4px;width:4px;height:4px;border-radius:50%;background-color:var(--primary-color)}.cal-day.selected.has-event::after{background-color:#fff}
+    /* Grey Theme */
+    :root[data-theme="grey"], :root {
+      --bg-main: #0f172a;
+      --bg-card: #1e293b;
+      --border-color: #334155;
+      --primary-color: #6366f1;
+      --primary-hover: #4f46e5;
+      --text-color: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    
+    /* Vibrant Pink Theme */
+    :root[data-theme="pink"] {
+      --bg-main: #2a081a;
+      --bg-card: #4a0d33;
+      --border-color: #f43f5e;
+      --primary-color: #ff1493;
+      --primary-hover: #ff69b4;
+      --text-color: #fff0f6;
+      --text-muted: #f472b6;
+    }
+
+    body {
+      background-color: var(--bg-main) !important;
+      color: var(--text-color) !important;
+      transition: background-color .3s ease, color .3s ease;
+    }
+    .card-theme {
+      background-color: var(--bg-card);
+      border-color: var(--border-color);
+      color: var(--text-color);
+    }
+    .btn-primary {
+      background-color: var(--primary-color) !important;
+      color: #fff !important;
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover) !important;
+    }
+    .text-muted {
+      color: var(--text-muted) !important;
+    }
+    input, select {
+      color: var(--text-color);
+      background-color: var(--bg-card);
+    }
+    input::placeholder {
+      color: var(--text-muted);
+      opacity: .7;
+    }
+    .cal-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: .5rem;
+      cursor: pointer;
+      font-size: .875rem;
+      font-weight: 500;
+      transition: all .2s;
+    }
+    .cal-day:hover:not(.empty) {
+      background-color: rgba(255, 255, 255, .15);
+    }
+    .cal-day.selected {
+      background-color: var(--primary-color) !important;
+      color: #fff !important;
+      font-weight: 700;
+    }
+    .cal-day.has-event {
+      position: relative;
+    }
+    .cal-day.has-event::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+    }
+    .cal-day.selected.has-event::after {
+      background-color: #fff;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans">
   <header class="card-theme border-b p-4 flex justify-between items-center sticky top-0 z-50">
-    <h1 class="text-xl font-bold tracking-wide">LifeSync Hub</h1>
+    <div class="flex items-center gap-2">
+      <img src="https://cdn-icons-png.flaticon.com/512/3900/3900235.png" alt="FamSync" class="w-7 h-7">
+      <h1 class="text-xl font-bold tracking-wide">FamSync</h1>
+    </div>
     <div class="flex items-center gap-3">
       <button id="notifyBtn" onclick="requestNotificationPermission()" class="hidden p-2 rounded-lg card-theme border hover:opacity-80 text-xs font-semibold">🔔 Enable Notifications</button>
       <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2 rounded-lg card-theme border hover:opacity-80 flex items-center gap-2 text-xs font-semibold"><span id="themeIcon">⚙️</span><span id="themeLabel">Grey Theme</span></button>
@@ -25,8 +110,11 @@
 
   <main id="authScreen" class="flex-1 flex items-center justify-center p-4">
     <div class="card-theme border rounded-2xl p-6 w-full max-w-sm shadow-xl">
+      <div class="flex justify-center mb-3">
+        <img src="https://cdn-icons-png.flaticon.com/512/3900/3900235.png" alt="FamSync Logo" class="w-12 h-12">
+      </div>
       <h2 id="authTitle" class="text-2xl font-bold mb-2 text-center">Welcome Back</h2>
-      <p class="text-xs text-muted mb-6 text-center">Sign in to access your synced grocery list, tasks, and calendar.</p>
+      <p class="text-xs text-muted mb-6 text-center">Sign in to access your synced family grocery list, tasks, and calendar.</p>
       <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
         <div>
           <label class="block text-xs font-semibold mb-1 text-muted">Email Address</label>
@@ -141,18 +229,20 @@
     let isInitialLoad = { groceries: true, tasks: true, events: true };
     let currentDate = new Date(), selectedDateStr = new Date().toISOString().split('T')[0];
 
-    // Notification permission request
+    // Explicit window attachment for notification permission
     window.requestNotificationPermission = async () => {
       if ('Notification' in window) {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
           alert("Notifications Enabled!");
           document.getElementById('notifyBtn').classList.add('hidden');
+        } else {
+          alert("Permission status: " + permission);
         }
       }
     };
 
-    // Helper for Service Worker Notifications
+    // Service Worker Notification call
     async function showLocalNotification(title, body) {
       if ('Notification' in window && Notification.permission === 'granted') {
         if ('serviceWorker' in navigator) {
@@ -164,7 +254,7 @@
             vibrate: [200, 100, 200]
           });
         } else {
-          new Notification(title, { body });
+          new Notification(title, { body, icon: 'https://cdn-icons-png.flaticon.com/512/3900/3900235.png' });
         }
       }
     }
@@ -221,7 +311,7 @@
 
     const escapeHtml = str => (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 
-    // Calendar
+    // Calendar logic
     window.changeMonth = offset => { currentDate.setMonth(currentDate.getMonth() + offset); renderCalendar(); };
     window.jumpToDate = dateStr => {
       if (!dateStr) return;
