@@ -180,16 +180,20 @@
     };
     window.handleLogout = () => signOut(auth);
 
-    onAuthStateChanged(auth, user => {
-      document.getElementById('authScreen').classList.toggle('hidden', !!user);
-      document.getElementById('appScreen').classList.toggle('hidden', !user);
-      document.getElementById('logoutBtn').classList.toggle('hidden', !user);
-      document.getElementById('notifyBtn').classList.toggle('hidden', !user || (window.Notification && Notification.permission === 'granted'));
-      if (user) {
-        listenToCollections();
-        renderCalendar();
-      }
-    });
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  
+  document.getElementById('authScreen').classList.toggle('hidden', !!user);
+  document.getElementById('appScreen').classList.toggle('hidden', !user);
+  document.getElementById('logoutBtn').classList.toggle('hidden', !user);
+  document.getElementById('notifyBtn').classList.toggle('hidden', !user || (window.Notification && Notification.permission === 'granted'));
+
+  if (user) {
+    // Извикваме слушателите САМО след като потребителят е успешно логнат
+    listenToCollections();
+    renderCalendar();
+  }
+});
 
     window.switchTab = tab => ['groceries', 'tasks', 'events'].forEach(t => {
       document.getElementById(`section-${t}`).classList.toggle('hidden', t !== tab);
